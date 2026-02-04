@@ -21,7 +21,7 @@ class AppController {
       host: 'localhost',
       port: 5432,
       username: 'postgres',
-      password: 'admin',
+      password: '1234',
       database: 'cookie',
       entities: [
         User, Session

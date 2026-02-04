@@ -54,11 +54,43 @@ export class SessionService {
 
   }
 
-  // removeSession(userId: string, sessionId: string) {
-  //   const sessions = this.activeSessions.get(userId);
-  //   if (sessions) {
-  //     sessions.delete(sessionId);
-  //     if (sessions.size === 0) this.activeSessions.delete(userId);
-  //   }
-  // }
+  async removeSession(userId: number, sessionId: string) {
+    const sessionRepo = this.dataSource.getRepository(Session);
+
+    await sessionRepo.delete({
+      sessionId,
+      user: { id: userId },
+    });
+  }
+
+  async removeEarliestSession(email: string) {
+  const sessionRepo = this.dataSource.getRepository(Session);
+  const userRepo = this.dataSource.getRepository(User);
+
+  const earliestSession = await sessionRepo.findOne({
+    where: { user: { email } },
+    order: { createdAt: 'ASC' },
+  });
+
+  if (!earliestSession) {
+    return;
+  }
+  const sessionId=earliestSession.sessionId;
+
+  await sessionRepo.remove(earliestSession);
+  const user  = await userRepo.findOne({where: {email}});
+  user.noOfLogin-=1;
+  userRepo.save(user);
+
+  const userId = user.id;
+
+  console.log(
+    `Removed earliest session: ${earliestSession.sessionId}`,
+  );
+  return {
+    userId, sessionId
+  }
+}
+
+
 }

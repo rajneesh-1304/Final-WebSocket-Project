@@ -17,10 +17,10 @@ import { auth, db, gitProvider, provider } from "../../app/config/firebase";
 import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/app/redux/store";
-import { loginThunk, registerThunk } from "@/app/redux/features/users/userSlice";
+import { loginThunk, logout, registerThunk } from "@/app/redux/features/users/userSlice";
 import { useAppSelector } from "@/app/redux/hooks";
 import { signOut } from "firebase/auth";
-import connectWebSocket from "../websocket/websocket";
+import { connectSocket, getSocket } from "../websocket/websocket";
 import { io } from "socket.io-client";
 
 const LoginUserSchema = z.object({
@@ -38,16 +38,24 @@ interface UserState {
 interface RootState {
   users: UserState;
 }
-const socket = io('http://localhost:5000');
 
 export default function LoginForm() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const err = useAppSelector((state: any) => state.users.error)
   const currentUser = useAppSelector(state => state.users.currentUser);
-  // const socket = io("http://localhost:5000");
+  let emaill: string = "";
+  // const socket = io("http://localhost:5000")
+const forceLogout = (message?: string) => {
+  dispatch(logout());
+  signOut(auth).catch(() => {});
+  setSnackbarMessage(message || "Session expired. Please login again.");
+  setSnackbarOpen(true);
+  router.push("/login");
+};
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [generatedOtp, setGeneratedOtp] = useState<string | null>(null);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showOtpInput, setShowOtpInput] = useState(false);
@@ -69,20 +77,40 @@ export default function LoginForm() {
 
   const handleTogglePassword = () => setShowPassword((prev) => !prev);
 
-  useEffect(()=>{
-    if(currentUser){
-      connectWebSocket(currentUser.id);
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+
+    socket.on("session_removed", async (data) => {
+      console.log("Session removed:", data.message);
+      dispatch(logout());
+      router.push("/login");
+    });
+
+    socket.on("disconnect", async (reason) => {
+      console.log("Socket disconnected:", reason);
+      dispatch(logout());
+      router.push("/login");
+    });
+
+    socket.on("otp_generated", (data) => {
+      console.log("OTP received:", data.otp);
+      setGeneratedOtp(data.otp);
+    });
+
+    return () => {
+      socket.off("session_removed");
+      socket.off("disconnect");
+      socket.off("otp_generated");
+    };
+  }, [dispatch, router]);
+
+  useEffect(() => {
+    if (currentUser?.id) {
+      connectSocket(currentUser?.id);
     }
-  },[currentUser])
+  }, [currentUser?.id]);
 
-  // useEffect(()=>
-  //    {
-  //   socket.on('otp_sent', (data) => {
-  //     alert('OTP Sent! Status: ' + data.status);
-  //   });
-
-  //   return () => socket.off('otp_sent');
-  // }, []);
 
   const handleSignIn = async () => {
     try {
@@ -113,15 +141,30 @@ export default function LoginForm() {
   };
 
   const verifyOtp = () => {
-    socket.connect();
-    const payload = {
-      userId:currentUser?.id,
-      otp:otp,
+    const socket = getSocket();
+    if (!socket) {
+      return;
     }
-    console.log(otp,"otp")
-    socket.emit('otp', payload);
-    console.log('OTP event sent');
-  }
+
+    socket.emit("verify_otp", { otp, emaill });
+    setSnackbarMessage("Now you can login");
+    setSnackbarOpen(true);
+  };
+
+
+  const generateOtp = () => {
+    const socket = getSocket();
+    if (!socket) {
+      console.error("❌ Socket not connected");
+      return;
+    }
+
+    socket.emit("generate_otp");
+
+    setSnackbarMessage("OTP sent to your device");
+    setSnackbarOpen(true);
+  };
+
 
 
   const onSubmit = async (data: LoginFormInputs) => {
@@ -133,6 +176,7 @@ export default function LoginForm() {
         password: data.password
       }
       const loginResponse = await dispatch(loginThunk(loginData));
+      emaill = data.email;
 
       if (loginThunk.fulfilled.match(loginResponse)) {
         setSnackbarMessage("Login successful!");
@@ -140,7 +184,11 @@ export default function LoginForm() {
         setTimeout(() => router.push('/'), 1200);
       } else {
         await signOut(auth);
-        setSnackbarMessage(`${err.message ? err.message : err}`);
+        const userId = 123;
+        if (userId) {
+          connectSocket(userId, "otp");
+        }
+        setSnackbarMessage(`Max Reach of Login, Verify with Otp to login`);
         setSnackbarOpen(true);
         setShowOtpInput(true);
       }
@@ -226,6 +274,27 @@ export default function LoginForm() {
       {showOtpInput && (
 
         <Box display="flex" marginTop="10px" flexDirection="column" gap={2}>
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={generateOtp}
+          >
+            Generate OTP
+          </Button>
+          {generatedOtp && (
+            <Box
+              sx={{
+                padding: "10px",
+                border: "1px dashed #1976d2",
+                borderRadius: "6px",
+                textAlign: "center",
+                fontWeight: "bold",
+                color: "#1976d2",
+              }}
+            >
+              Generated OTP: {generatedOtp}
+            </Box>
+          )}
           <TextField
             label="Enter OTP"
             variant="outlined"

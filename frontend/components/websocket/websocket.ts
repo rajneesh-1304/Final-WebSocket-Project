@@ -1,29 +1,50 @@
-import { Socket, io } from "socket.io-client"
-function connectWebSocket(id: any) {
-    const url = 'http://localhost:5000';
+import { io, Socket } from "socket.io-client";
 
-    const socket = io(url, {
-        auth: {
-            id: id
-        }
-    },)
-    socket.on("connect", () => {
-        console.log("Connected")
-        socket.on('otp_sent', (data) => {
-            alert('OTP Sent! Status: ' + data.status);
-        });
-    })
-    socket.on("disconnect", () => {
-        console.log("Disconnected")
-    })
-    socket.on("connect_error", async err => {
-        console.log(`connect_error due to ${err.message}`)
-        await fetch("/api/socket")
-    })
+let socket: Socket | null = null;
 
-    socket.on('otp_sent', (data) => {
-        console.log('Server response:', data);
+export const getSocket = () => socket;
+
+export const connectSocket = (userId: number, purpose: "otp" | "session" = "session") => {
+  if (!socket) {
+    socket = io("http://localhost:5000", {
+      auth: { userId, purpose },
+      autoConnect: false,
     });
-}
+  }
 
-export default connectWebSocket;
+  if (!socket.connected) {
+    socket.auth = { userId };
+    socket.connect();
+  }
+
+  socket.on("connect", () => {
+    console.log("WebSocket connected:", socket?.id);
+  });
+
+  socket.on("otp_required", (data) => {
+    console.log(" OTP required:", data.message);
+  });
+
+  socket.on("otp_generated", (data) => {
+    console.log(" OTP generated (dev):", data.otp);
+  });
+
+  socket.on("otp_response", (data) => {
+    console.log(" OTP response:", data);
+  });
+
+  socket.on("otp_error", (data) => {
+    console.error(" OTP error:", data.message);
+  });
+
+  socket.on("disconnect", () => {
+    console.log(" WebSocket disconnected");
+  });
+};
+
+export const disconnectSocket = () => {
+  if (socket) {
+    socket.disconnect();
+    socket = null;
+  }
+};
