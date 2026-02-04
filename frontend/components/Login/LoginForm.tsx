@@ -46,13 +46,13 @@ export default function LoginForm() {
   const currentUser = useAppSelector(state => state.users.currentUser);
   let emaill: string = "";
   // const socket = io("http://localhost:5000")
-const forceLogout = (message?: string) => {
-  dispatch(logout());
-  signOut(auth).catch(() => {});
-  setSnackbarMessage(message || "Session expired. Please login again.");
-  setSnackbarOpen(true);
-  router.push("/login");
-};
+  const forceLogout = (message?: string) => {
+    dispatch(logout());
+    signOut(auth).catch(() => { });
+    setSnackbarMessage(message || "Session expired. Please login again.");
+    setSnackbarOpen(true);
+    router.push("/login");
+  };
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [generatedOtp, setGeneratedOtp] = useState<string | null>(null);
@@ -108,6 +108,28 @@ const forceLogout = (message?: string) => {
   useEffect(() => {
     if (currentUser?.id) {
       connectSocket(currentUser?.id);
+
+      const socket = getSocket();
+      if (!socket) return;
+      const handleSessionRemoved = (data: any) => {
+        console.log("Session removed:", data.message);
+        forceLogout(data.message);
+      };
+
+      const handleDisconnect = (reason: string) => {
+        console.log("Socket disconnected:", reason);
+        if (reason === "io server disconnect") {
+          forceLogout("You were logged out from another device");
+        }
+      };
+
+      socket.on("session_removed", handleSessionRemoved);
+      socket.on("disconnect", handleDisconnect);
+
+      return () => {
+        socket.off("session_removed", handleSessionRemoved);
+        socket.off("disconnect", handleDisconnect);
+      };
     }
   }, [currentUser?.id]);
 
