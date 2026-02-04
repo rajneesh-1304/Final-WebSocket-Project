@@ -1,0 +1,38 @@
+.register{
+    margin-top: 25px;
+    font-size: 15px;
+    text-align: center;
+}
+
+.register_link{
+    color: rgb(53, 134, 211);
+    cursor: pointer;
+}
+
+.loginForm{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.main-form{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.formm{
+    padding: 15px 10px;
+    background-color: white;
+    border-radius: 5px;
+}
+
+.register_heading {
+  margin-top: 10px;
+  font-size: 24px;
+  font-weight: 600;
+  color: #212121;
+  text-align: center;
+  margin-bottom: 12px;
+}

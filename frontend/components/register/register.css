@@ -1,0 +1,160 @@
+.login{
+    margin-top: 15px;
+    font-size: 15px;
+}
+
+.login_link{
+    color: rgb(53, 134, 211);
+    cursor: pointer;
+}
+
+
+* {
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+.register_container {
+  min-height: 100vh;
+  width: 100vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 40px;
+  background-color: #f1f3f6; 
+}
+
+.register_formm {
+  width: 320px;
+  height: 520px;
+  padding: 40px;
+  padding-top: 60px;
+  background-color: #2874F0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.register_form {
+  width: 400px;
+  height: 600px;
+  padding: 28px 26px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.head {
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.sign {
+  margin-top: 28px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #e6e6e6;
+  text-align: center;
+}
+
+.logo {
+  margin-top: auto;
+  height: 150px;
+  width: 250px;
+}
+
+.register_heading {
+  margin-top: 10px;
+  font-size: 24px;
+  font-weight: 600;
+  color: #212121;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.register_main_form {
+  width: 100%;
+  margin-top: 6px;
+}
+
+.MuiTextField-root {
+  margin-bottom: 12px;
+}
+
+.MuiButton-contained {
+  height: 42px;
+  border-radius: 2px; 
+  font-weight: 600;
+  text-transform: none;
+  background-color: #fb641b;
+}
+
+.MuiButton-contained:hover {
+  background-color: #e65a17;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  font-size: 13px;
+  color: #878787;
+  margin: 12px 0;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid #d7d7d7;
+}
+
+.login {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 14px;
+  color: #212121;
+}
+
+.login_link {
+  color: #2874F0;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.login_link:hover {
+  text-decoration: underline;
+}
+
+
+.main-form{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.formm{
+    padding: 15px 10px;
+    background-color: white;
+    border-radius: 5px;
+}
+
+@media (max-width: 480px) {
+  .register_container {
+    padding-top: 24px;
+  }
+
+  .register_formm {
+    display: none;
+  }
+
+  .register_form {
+    width: 90%;
+    height: auto;
+    padding: 26px 20px;
+  }
+}
