@@ -21,7 +21,6 @@ import { loginThunk, logout, registerThunk } from "@/app/redux/features/users/us
 import { useAppSelector } from "@/app/redux/hooks";
 import { signOut } from "firebase/auth";
 import { connectSocket, getSocket } from "../websocket/websocket";
-import { io } from "socket.io-client";
 
 const LoginUserSchema = z.object({
   email: z.string().trim().min(1, "Email is required").email("Enter a valid email address"),
@@ -78,8 +77,10 @@ export default function LoginForm() {
   const handleTogglePassword = () => setShowPassword((prev) => !prev);
 
   useEffect(() => {
+    
     const socket = getSocket();
     if (!socket) return;
+    socket.connect();
 
     socket.on("session_removed", async (data) => {
       console.log("Session removed:", data.message);
@@ -108,28 +109,6 @@ export default function LoginForm() {
   useEffect(() => {
     if (currentUser?.id) {
       connectSocket(currentUser?.id);
-
-      const socket = getSocket();
-      if (!socket) return;
-      const handleSessionRemoved = (data: any) => {
-        console.log("Session removed:", data.message);
-        forceLogout(data.message);
-      };
-
-      const handleDisconnect = (reason: string) => {
-        console.log("Socket disconnected:", reason);
-        if (reason === "io server disconnect") {
-          forceLogout("You were logged out from another device");
-        }
-      };
-
-      socket.on("session_removed", handleSessionRemoved);
-      socket.on("disconnect", handleDisconnect);
-
-      return () => {
-        socket.off("session_removed", handleSessionRemoved);
-        socket.off("disconnect", handleDisconnect);
-      };
     }
   }, [currentUser?.id]);
 
@@ -154,6 +133,15 @@ export default function LoginForm() {
         setSnackbarMessage("Login successful!");
         setSnackbarOpen(true);
         router.push('/')
+      }else {
+        await signOut(auth);
+        const userId = 123;
+        if (userId) {
+          connectSocket(userId, "otp");
+        }
+        setSnackbarMessage(`Max Reach of Login, Verify with Otp to login`);
+        setSnackbarOpen(true);
+        setShowOtpInput(true);
       }
     } catch (error) {
       await signOut(auth);
@@ -177,7 +165,7 @@ export default function LoginForm() {
   const generateOtp = () => {
     const socket = getSocket();
     if (!socket) {
-      console.error("❌ Socket not connected");
+      console.error("Socket not connected");
       return;
     }
 
@@ -301,13 +289,13 @@ export default function LoginForm() {
             color="secondary"
             onClick={generateOtp}
           >
-            Generate OTP
+            Send OTP
           </Button>
           {generatedOtp && (
             <Box
               sx={{
                 padding: "10px",
-                border: "1px dashed #1976d2",
+                border: "1px rgb(77, 149, 221)",
                 borderRadius: "6px",
                 textAlign: "center",
                 fontWeight: "bold",
@@ -322,8 +310,6 @@ export default function LoginForm() {
             variant="outlined"
             value={otp}
             onChange={(e) => setOtp(e.target.value)}
-          // error={!!errors.email}
-          // helperText={errors.email ? errors.email.message : ""}
           />
           <Button variant="contained" color="primary" onClick={verifyOtp}>
             Verify OTP

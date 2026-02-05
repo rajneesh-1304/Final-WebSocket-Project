@@ -1,7 +1,7 @@
 import { WebSocketGateway, OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, ConnectedSocket, MessageBody } from '@nestjs/websockets';
 import { SessionService } from './session.service';
 import { Socket } from 'socket.io';
-import { parse } from 'path'; import { WebSocketServer } from '@nestjs/websockets';
+import { WebSocketServer } from '@nestjs/websockets';
 import { Server } from 'socket.io';
 
 
@@ -26,7 +26,7 @@ export class PresenceGateway implements OnGatewayConnection, OnGatewayDisconnect
         client.disconnect();
         return;
       }
-      console.log('🟢 User connected:', userId, client.id);
+      console.log('User connected:', userId, client.id);
 
       if (purpose === "otp") {
         return;
@@ -56,7 +56,7 @@ export class PresenceGateway implements OnGatewayConnection, OnGatewayDisconnect
 
     if (userId && sessionId) {
       await this.sessionService.removeSession(userId, sessionId);
-      console.log(`🔴 User ${userId} disconnected (${sessionId})`);
+      console.log(`User ${userId} disconnected (${sessionId})`);
     }
   }
 

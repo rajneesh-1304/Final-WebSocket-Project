@@ -7,7 +7,7 @@ const rawDataSourceOptions = {
   host: 'localhost',
   port: 5432,
   username: 'postgres',
-  password: '1234',
+  password: 'admin',
   database: 'cookie',
   synchronize: false,
   entities: [
